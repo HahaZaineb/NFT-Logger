@@ -1,0 +1,545 @@
+<!-- File: templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Data Logger NFT</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        #wallet-section {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .intro {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .cta-button {
+            background-color: #2196F3;
+            font-size: 18px;
+            padding: 15px 30px;
+            margin-top: 20px;
+        }
+
+        .cta-button:hover {
+            background-color: #1976D2;
+        }
+
+        .gallery {
+            margin-top: 40px;
+        }
+
+        .nft-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        #wallet-status {
+            margin: 10px 0;
+            color: #666;
+        }
+
+        #connect-wallet {
+            background-color: #ff9800;
+        }
+
+        #connect-wallet:hover {
+            background-color: #f57c00;
+        }
+
+        .nft-item a {
+            color: #2196F3;
+            text-decoration: none;
+        }
+
+        .nft-item a:hover {
+            text-decoration: underline;
+        }
+
+        .search-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .nft-item {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nft-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nft-actions button {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .copy-button {
+            background-color: #607d8b;
+        }
+
+        .transfer-button {
+            background-color: #9c27b0;
+        }
+
+        .no-results {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+        font-style: italic;
+    }
+    
+    .search-form {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 8px;
+    }
+    </style>
+</head>
+<body>
+    <div id="wallet-section">
+        <button id="connect-wallet" onclick="connectWallet()">Connect MetaMask</button>
+        <p id="wallet-status">Not connected</p>
+    </div>
+
+    <div class="container">
+        <div class="intro">
+            <h1>Welcome to NFT Logger</h1>
+            <p>
+                Log your unique data entries and mint NFT certificates to create a verifiable record on the blockchain.
+                Securely manage your data and explore the possibilities of decentralized record-keeping.
+            </p>
+            <button onclick="showForm()" class="cta-button">Get Started</button>
+        </div>
+
+        <div id="form-section" style="display: none;">
+            <h1>Log Data & Mint NFT</h1>
+            <form id="logDataForm">
+                <div class="form-group">
+                    <label for="identifier">Identifier:</label>
+                    <input type="text" id="identifier" name="identifier" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description:</label>
+                    <textarea id="description" name="description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="timestamp">Timestamp:</label>
+                    <input type="datetime-local" id="timestamp" name="timestamp" required>
+                </div>
+                <button type="submit">Log Data & Mint NFT</button>
+            </form>
+
+            <div class="search-section">
+                <h2>Search NFTs</h2>
+                <form id="searchForm" class="search-form">
+                    <div class="form-group">
+                        <label for="search_id">NFT ID:</label>
+                        <input type="text" id="search_id" name="search_id">
+                    </div>
+                    <div class="form-group">
+                        <label for="search_description">Description Contains:</label>
+                        <input type="text" id="search_description" name="search_description">
+                    </div>
+                    <div class="form-group">
+                        <label for="search_timestamp">Timestamp:</label>
+                        <input type="datetime-local" id="search_timestamp" name="search_timestamp" class="form-control">
+                    </div>
+                    <button type="submit">Search</button>
+                    <button type="button" onclick="clearSearch()">Clear Search</button>
+                </form>
+            </div>
+
+            <div class="gallery" id="nftGallery">
+                <h2>Your NFTs</h2>
+                <div id="nftList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userWallet = null;
+
+        function showForm() {
+            document.querySelector('.intro').style.display = 'none';
+            document.getElementById('form-section').style.display = 'block';
+        }
+
+        async function checkConnection() {
+            const response = await fetch('/check_auth');
+            const data = await response.json();
+            if (data.authenticated) {
+                userWallet = data.wallet_address;
+                document.getElementById('wallet-status').textContent = `Connected: ${userWallet}`;
+                fetchNFTs();
+            }
+        }
+
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                alert('Please install MetaMask!');
+                return;
+            }
+
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                userWallet = accounts[0];
+
+                const response = await fetch('/connect_wallet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ wallet_address: userWallet }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('wallet-status').textContent = `Connected: ${userWallet}`;
+                    fetchNFTs();
+                } else {
+                    alert('Failed to connect wallet: ' + data.error);
+                }
+            } catch (error) {
+                alert('Failed to connect wallet: ' + error.message);
+            }
+        }
+
+        document.getElementById('logDataForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!userWallet) {
+                alert('Please connect your wallet first');
+                return;
+            }
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/log_data', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    showMintingSuccess(data);
+                    fetchNFTs();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error minting NFT');
+            }
+        });
+
+        async function fetchNFTs() {
+            try {
+                const response = await fetch('/get_nfts');
+                const data = await response.json();
+                
+                const nftList = document.getElementById('nftList');
+                nftList.innerHTML = '';
+                
+                data.nfts.forEach(nft => {
+                    const nftElement = document.createElement('div');
+                    nftElement.className = 'nft-item';
+                    nftElement.innerHTML = `
+                        <p>Token ID: ${nft.tokenId}</p>
+                        <p>URI: <a href="${nft.tokenURI}" target="_blank">${nft.tokenURI}</a></p>
+                    `;
+                    nftList.appendChild(nftElement);
+                });
+            } catch (error) {
+                console.error('Error fetching NFTs:', error);
+            }
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const searchId = document.getElementById('search_id').value.trim();
+                const searchDescription = document.getElementById('search_description').value.trim();
+                const searchTimestamp = document.getElementById('search_timestamp').value.trim();
+                
+                let nfts = [];
+                
+                // Search by ID if provided
+                if (searchId) {
+                    const response = await fetch(`/search_by_id?id=${searchId}`);
+                    const data = await response.json();
+                    if (data.nfts) nfts = nfts.concat(data.nfts);
+                }
+                
+                // Search by description if provided
+                if (searchDescription) {
+                    const response = await fetch(`/search_by_description?description=${encodeURIComponent(searchDescription)}`);
+                    const data = await response.json();
+                    if (data.nfts) nfts = nfts.concat(data.nfts);
+                }
+                
+                // Search by timestamp if provided
+                if (searchTimestamp) {
+                    const response = await fetch(`/search_by_timestamp?timestamp=${encodeURIComponent(searchTimestamp)}`);
+                    const data = await response.json();
+                    if (data.nfts) nfts = nfts.concat(data.nfts);
+                }
+                
+                // If no search criteria, get all NFTs
+                if (!searchId && !searchDescription && !searchTimestamp) {
+                    const response = await fetch('/get_nfts');
+                    const data = await response.json();
+                    if (data.nfts) nfts = data.nfts;
+                }
+                
+                // Remove duplicates if any
+                nfts = Array.from(new Set(nfts.map(n => JSON.stringify(n)))).map(s => JSON.parse(s));
+                
+                if (nfts.length === 0) {
+                    displayNFTs([]);
+                    alert('No NFTs found matching your criteria');
+                } else {
+                    displayNFTs(nfts);
+                }
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('Error searching NFTs: ' + error.message);
+            }
+        });
+
+        function clearSearch() {
+            document.getElementById('search_id').value = '';
+            document.getElementById('search_description').value = '';
+            document.getElementById('search_timestamp').value = '';
+            document.getElementById('searchForm').dispatchEvent(new Event('submit'));
+        }
+
+        function displayNFTs(nfts) {
+            const nftList = document.getElementById('nftList');
+            nftList.innerHTML = '';
+            
+            if (!nfts || nfts.length === 0) {
+                nftList.innerHTML = '<p class="no-results">No NFTs found</p>';
+                return;
+            }
+            
+            nfts.forEach(nft => {
+                const nftElement = document.createElement('div');
+                nftElement.className = 'nft-item';
+                
+                // Convert IPFS URI to HTTP URL for viewing
+                const httpUrl = nft.tokenURI.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+                
+                nftElement.innerHTML = `
+                    <p>Token ID: ${nft.tokenId}</p>
+                    <p>URI: <a href="${httpUrl}" target="_blank">${nft.tokenURI}</a></p>
+                    <div class="nft-actions">
+                        <button onclick="copyToClipboard('${nft.tokenURI}')" class="copy-button">
+                            Copy URI
+                        </button>
+                        <button onclick="copyToClipboard('${httpUrl}')" class="copy-button">
+                            Copy HTTP URL
+                        </button>
+                    </div>
+                `;
+                nftList.appendChild(nftElement);
+            });
+        }
+
+        // Add this function for the minting success alert
+        function showMintingSuccess(data) {
+            const message = `
+NFT minted successfully!
+
+Transaction Hash: ${data.transaction_hash}
+Metadata URL: ${data.view_url}
+Etherscan: ${data.etherscan_url}
+
+Click OK to copy links to clipboard.`;
+
+            if (confirm(message)) {
+                // Create a formatted text for clipboard
+                const clipboardText = `
+Transaction Hash: ${data.transaction_hash}
+Metadata URL: ${data.view_url}
+Etherscan: ${data.etherscan_url}
+                `;
+                copyToClipboard(clipboardText);
+            }
+        }
+
+        // Add this helper function for copying text
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                alert('Copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Copied to clipboard!');
+            }
+        }
+
+        async function initiateTransfer(tokenId) {
+            try {
+                const response = await fetch('/transfer_nft', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tokenId }),
+                });
+                const data = await response.json();
+                alert(data.message || data.error);
+            } catch (error) {
+                alert('Failed to initiate transfer: ' + error.message);
+            }
+        }
+
+        async function recoverMetadata() {
+            const tokenId = prompt("Enter the token ID to recover:");
+            if (!tokenId) return;
+            
+            const description = prompt("Enter the description for this token:");
+            if (!description) return;
+            
+            const timestamp = prompt("Enter the timestamp (YYYY-MM-DD HH:MM:SS):");
+            if (!timestamp) return;
+            
+            try {
+                const response = await fetch('/add_metadata', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        identifier: tokenId,
+                        description: description,
+                        timestamp: Math.floor(new Date(timestamp).getTime() / 1000)
+                    })
+                });
+                
+                const data = await response.json();
+                alert(data.message || data.error);
+            } catch (error) {
+                alert('Error recovering metadata: ' + error.message);
+            }
+        }
+
+        // Check connection status when page loads
+        checkConnection();
+
+        // Listen for account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', function (accounts) {
+                window.location.reload();
+            });
+        }
+
+        // Add this test function
+        async function testNFTs() {
+            try {
+                const response = await fetch('/test_nfts');
+                const data = await response.json();
+                console.log('Test NFTs response:', data);
+                if (data.nfts) {
+                    console.log(`Found ${data.nfts.length} NFTs`);
+                    data.nfts.forEach(nft => {
+                        console.log(`Token ID: ${nft.tokenId}`);
+                    });
+                }
+            } catch (error) {
+                console.error('Test error:', error);
+            }
+        }
+
+        // Call this when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            testNFTs();
+        });
+    </script>
+</body>
+</html>
