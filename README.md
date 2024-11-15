@@ -1,4 +1,4 @@
-# ChronoLog NFT
+# NFT-Logger
 
 A decentralized data logging system that converts timestamped records into unique NFTs on the blockchain, ensuring permanent and verifiable data storage.
 
