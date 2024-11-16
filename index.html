@@ -299,7 +299,7 @@
                 if (data.error) {
                     alert(data.error);
                 } else {
-                    showMintingSuccess(data);
+                    showMintingDialog(data);
                     fetchNFTs();
                 }
             } catch (error) {
@@ -368,14 +368,14 @@
                     if (data.nfts) nfts = data.nfts;
                 }
                 
-                // Remove duplicates if any
+                // Remove duplicates
                 nfts = Array.from(new Set(nfts.map(n => JSON.stringify(n)))).map(s => JSON.parse(s));
                 
+                // Display results
+                displayNFTs(nfts);
+                
                 if (nfts.length === 0) {
-                    displayNFTs([]);
                     alert('No NFTs found matching your criteria');
-                } else {
-                    displayNFTs(nfts);
                 }
                 
             } catch (error) {
@@ -423,29 +423,66 @@
             });
         }
 
-        // Add this function for the minting success alert
-        function showMintingSuccess(data) {
-            const message = `
-NFT minted successfully!
+        function showMintingDialog(data) {
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                z-index: 1000;
+                max-width: 500px;
+                width: 90%;
+            `;
 
-Transaction Hash: ${data.transaction_hash}
-Metadata URL: ${data.view_url}
-Etherscan: ${data.etherscan_url}
+            dialog.innerHTML = `
+                <h3 style="margin-top: 0; font-size: 24px;">NFT Minted Successfully!</h3>
+                
+                <div style="margin: 20px 0;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">Transaction:</p>
+                    <input type="text" value="${data.transaction_hash}" readonly 
+                        style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button onclick="copyText('${data.transaction_hash}')" 
+                        style="background: #4CAF50; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+                        Copy Transaction Hash
+                    </button>
+                </div>
 
-Click OK to copy links to clipboard.`;
+                <div style="margin: 20px 0;">
+                    <p style="font-weight: bold; margin-bottom: 5px;">View Metadata:</p>
+                    <input type="text" value="${data.view_url}" readonly 
+                        style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button onclick="copyText('${data.view_url}')" 
+                        style="background: #4CAF50; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                        Copy Metadata URL
+                    </button>
+                    <button onclick="window.open('${data.view_url}', '_blank')" 
+                        style="background: #4CAF50; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">
+                        Open Metadata
+                    </button>
+                </div>
 
-            if (confirm(message)) {
-                // Create a formatted text for clipboard
-                const clipboardText = `
-Transaction Hash: ${data.transaction_hash}
-Metadata URL: ${data.view_url}
-Etherscan: ${data.etherscan_url}
-                `;
-                copyToClipboard(clipboardText);
-            }
+                <button onclick="this.parentElement.remove()" 
+                    style="background: #4CAF50; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+                    Close
+                </button>
+            `;
+
+            document.body.appendChild(dialog);
         }
 
-        // Add this helper function for copying text
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+
         async function copyToClipboard(text) {
             try {
                 await navigator.clipboard.writeText(text);
@@ -534,6 +571,7 @@ Etherscan: ${data.etherscan_url}
             } catch (error) {
                 console.error('Test error:', error);
             }
+
         }
 
         // Call this when the page loads
