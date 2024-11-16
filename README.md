@@ -11,6 +11,3 @@ A decentralized data logging system that converts timestamped records into uniqu
 - Metadata Storage: Each NFT contains detailed metadata about your log entry
 - User-Friendly Interface: Simple web interface for logging, minting, and searching records
 
-## Setup
-
-1. Clone the repository
