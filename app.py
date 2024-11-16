@@ -7,19 +7,10 @@ import os
 from pathlib import Path
 import requests
 import sqlite3
-
-# Print current working directory
-print("Current working directory:", os.getcwd())
-
-# Print all files in current directory
-print("Files in directory:", os.listdir())
+import secrets
 
 # Load .env file
 load_dotenv()
-
-# Get JWT and print its value
-PINATA_JWT = os.getenv('PINATA_JWT')
-print("Full JWT value:", PINATA_JWT)
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -33,6 +24,83 @@ web3 = Web3(Web3.HTTPProvider(ALCHEMY_URL))
 CONTRACT_ADDRESS = os.getenv('CONTRACT_ADDRESS')
 wallet_address = os.getenv('WALLET_ADDRESS')
 private_key = os.getenv('PRIVATE_KEY')
+PINATA_JWT = os.getenv('PINATA_JWT')
+
+# Contract ABI
+CONTRACT_ABI = [
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "to",
+                "type": "address"
+            },
+            {
+                "internalType": "string",
+                "name": "uri",
+                "type": "string"
+            }
+        ],
+        "name": "mintDataLogNFT",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "nextTokenId",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            }
+        ],
+        "name": "getOwnedTokens",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            }
+        ],
+        "name": "tokenURI",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
+
+# Initialize contract
+contract = web3.eth.contract(address=CONTRACT_ADDRESS, abi=CONTRACT_ABI)
 
 @app.route('/')
 def index():
@@ -120,14 +188,39 @@ def log_data():
         tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
         
         return jsonify({
+            'success': True,
             'message': 'NFT minted successfully!',
             'transaction_hash': tx_hash.hex(),
             'metadata_uri': metadata_uri,
-            'view_url': http_url
+            'view_url': http_url,
+            'etherscan_url': f'https://sepolia.etherscan.io/tx/{tx_hash.hex()}'
         })
         
     except Exception as e:
         print(f"Error in log_data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_nfts')
+def get_nfts():
+    if 'wallet_address' not in session:
+        return jsonify({'error': 'Please connect your wallet first'}), 401
+        
+    try:
+        user_address = to_checksum_address(session['wallet_address'])
+        token_ids = contract.functions.getOwnedTokens(user_address).call()
+        
+        nfts = []
+        for token_id in token_ids:
+            token_uri = contract.functions.tokenURI(token_id).call()
+            # Convert IPFS URI to HTTP URL
+            http_url = token_uri.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')
+            nfts.append({
+                "tokenId": token_id,
+                "tokenURI": http_url
+            })
+            
+        return jsonify({"nfts": nfts})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/search_by_id')
